@@ -40,8 +40,8 @@ int main() {
   struct fenster f = { .title = "hello", .width = W, .height = H, .buf = buf };
   fenster_open(&f);
   while (fenster_loop(&f) == 0) {
-    for (int i = 0; i < 320; i++) {
-      for (int j = 0; j < 240; j++) {
+    for (int i = 0; i < W; i++) {
+      for (int j = 0; j < H; j++) {
         fenster_pixel(&f, i, j) = rand();
       }
     }
