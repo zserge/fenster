@@ -1,6 +1,6 @@
 # Fenster
 
-Fenster /ˈfɛnstɐ/ -- a German language word for "window".
+Fenster /ˈfɛnstɐ/ -- a German word for "window".
 
 This library provides the most minimal and highly opinionated way to display a cross-platform 2D canvas. If you remember Borland BGI or drawing things in QBASIC or `INT 10h`- you know what I mean.
 
@@ -78,7 +78,7 @@ struct fenster {
 ```
 
 * `int fenster_open(struct fenster *f)` - opens a new app window.
-* `int fenster_loop(struct fenster *f)` - handles system events and refreshes the canvas. Returns negative values when app window is clsoed.
+* `int fenster_loop(struct fenster *f)` - handles system events and refreshes the canvas. Returns negative values when app window is closed.
 * `void fenster_close(struct fenster *f)` - closes the window and exists the graphical app.
 * `void fenster_sleep(int ms)` - pauses for `ms` milliseconds.
 * `int64_t fenster_time()` - returns current time in milliseconds.
