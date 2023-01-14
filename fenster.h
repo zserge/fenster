@@ -40,7 +40,7 @@ struct fenster {
 FENSTER_API int fenster_open(struct fenster *f);
 FENSTER_API int fenster_loop(struct fenster *f);
 FENSTER_API void fenster_close(struct fenster *f);
-FENSTER_API void fenster_sleep(int ms);
+FENSTER_API void fenster_sleep(int64_t ms);
 FENSTER_API int64_t fenster_time();
 #define fenster_pixel(f, x, y) ((f)->buf[((y) * (f)->width) + (x)])
 
@@ -271,7 +271,7 @@ FENSTER_API int fenster_loop(struct fenster *f) {
 #endif
 
 #ifdef WIN32
-FENSTER_API void fenster_sleep(int ms) { Sleep(ms); }
+FENSTER_API void fenster_sleep(int64_t ms) { Sleep(ms); }
 FENSTER_API int64_t fenster_time() {
   LARGE_INTEGER freq, count;
   QueryPerformanceFrequency(&freq);
@@ -279,7 +279,7 @@ FENSTER_API int64_t fenster_time() {
   return (int64_t)(count.QuadPart * 1000.0 / freq.QuadPart);
 }
 #else
-FENSTER_API void fenster_sleep(int ms) {
+FENSTER_API void fenster_sleep(int64_t ms) {
   struct timespec ts;
   ts.tv_sec = ms / 1000;
   ts.tv_nsec = (ms % 1000) * 1000000;
