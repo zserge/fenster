@@ -1,3 +1,5 @@
+//go:build example
+
 package main
 
 import (
