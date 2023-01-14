@@ -20,11 +20,11 @@ func main() {
 		// Fill screen with random noise
 		for i := 0; i < 240; i++ {
 			for j := 0; j < 320; j++ {
-				f.SetPixel(j, i, rand.Uint32())
+				f.Set(j, i, fenster.RGB(rand.Uint32()))
 			}
 		}
 		// Wait for FPS rate
-		sleep := 16*time.Millisecond - time.Now().Sub(lastFrame)
+		sleep := 16*time.Millisecond - time.Since(lastFrame)
 		if sleep > 0 {
 			time.Sleep(sleep)
 		}
