@@ -12,12 +12,13 @@ This library provides the most minimal and highly opinionated way to display a c
 * Cross-platform keyboard events (keycodes).
 * Cross-platform timers to have a stable FPS rate.
 * It's a single header in plain C99 of ~300LOC with no memory allocations.
+* Go bindings (`import "github.com/zserge/fenster"`)
 
 ## What it might do for you in the next version
 
 * Mouse events (at least left button click + XY)
 * Audio playback (WinMM, CoreAudio, ALSA)
-* Bindings for Go, Zig, Rust, Nim, Python...
+* Bindings for other programming languages
 
 ## What it will never do for you
 
