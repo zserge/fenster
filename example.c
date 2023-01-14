@@ -153,9 +153,8 @@ static int demo_raster_graphics() {
     fenster_fill(&f, W / 2, H / 3, 0x00333333, 0x00ff00ff);
     fenster_text(&f, 10, 10, "House", 8, 0x00ffffff);
     int64_t time = fenster_time();
-    if (time - now < 1000 / 60) {
+    if (time - now < 1000 / 60)
       fenster_sleep(time - now);
-    }
     now = time;
   }
   fenster_close(&f);
@@ -216,12 +215,12 @@ static int demo_keys() {
 }
 
 static int run() {
-	(void) demo_minimal_framebuffer;
-	(void) demo_raster_graphics;
-	(void) demo_keys;
+  (void)demo_minimal_framebuffer;
+  (void)demo_raster_graphics;
+  (void)demo_keys;
 
-	/*return demo_minimal_framebuffer();*/
-	return demo_raster_graphics();
+  /*return demo_minimal_framebuffer();*/
+  return demo_raster_graphics();
   /*return demo_keys();*/
 }
 
@@ -234,4 +233,3 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 #else
 int main() { return run(); }
 #endif
-
