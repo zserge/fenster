@@ -13,6 +13,7 @@ import (
 	"image/color"
 	"image/draw"
 	"runtime"
+	"time"
 	"unsafe"
 )
 
@@ -22,7 +23,7 @@ func init() {
 }
 
 type Fenster interface {
-	Loop() bool
+	Loop(d time.Duration) bool
 	Close()
 	Key(byte) bool
 	Mod() Mods
@@ -56,8 +57,9 @@ func rgbModel(c color.Color) color.Color {
 type Mods int
 
 type fenster struct {
-	f   C.struct_fenster
-	buf []uint32
+	f         C.struct_fenster
+	buf       []uint32
+	lastFrame time.Time
 }
 
 func (f *fenster) ColorModel() color.Model { return RGBModel }
@@ -72,14 +74,22 @@ func New(w, h int, title string) (Fenster, error) {
 	f.f.height = C.int(h)
 	f.f.buf = (*C.uint32_t)(C.malloc(C.size_t(w * h * 4)))
 	f.buf = unsafe.Slice((*uint32)(f.f.buf), w*h)
+	f.lastFrame = time.Now()
 	res := C.fenster_open(&f.f)
 	if res != 0 {
 		return nil, fmt.Errorf("failed to open window: %d", res)
 	}
 	return f, nil
 }
-func (f *fenster) Loop() bool { return C.fenster_loop(&f.f) == 0 }
-func (f *fenster) Close()     { C.fenster_close(&f.f) }
+
+func (f *fenster) Close() { C.fenster_close(&f.f) }
+func (f *fenster) Loop(d time.Duration) bool {
+	if sleep := d - time.Since(f.lastFrame); sleep > 0 {
+		time.Sleep(sleep)
+	}
+	f.lastFrame = time.Now()
+	return C.fenster_loop(&f.f) == 0
+}
 
 func (f *fenster) Key(code byte) bool { return f.f.keys[code] != 0 }
 func (f *fenster) Mod() Mods          { return Mods(f.f.mod) }

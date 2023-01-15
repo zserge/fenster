@@ -16,8 +16,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer f.Close()
-	lastFrame := time.Now()
-	for f.Loop() {
+	for f.Loop(time.Second / 60) {
 		// If escape is pressed - exit
 		if f.Key(27) {
 			break
@@ -28,11 +27,5 @@ func main() {
 				f.Set(j, i, fenster.RGB(rand.Uint32()))
 			}
 		}
-		// Wait for FPS rate
-		sleep := 16*time.Millisecond - time.Since(lastFrame)
-		if sleep > 0 {
-			time.Sleep(sleep)
-		}
-		lastFrame = time.Now()
 	}
 }
