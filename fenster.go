@@ -22,7 +22,6 @@ func init() {
 }
 
 type Fenster interface {
-	Open(w, h int, title string) error
 	Loop() bool
 	Close()
 	Key(byte) bool
@@ -66,8 +65,8 @@ func (f *fenster) Bounds() image.Rectangle {
 	return image.Rect(0, 0, int(f.f.width), int(f.f.height))
 }
 
-func New() Fenster { return &fenster{} }
-func (f *fenster) Open(w, h int, title string) error {
+func New(w, h int, title string) (Fenster, error) {
+	f := new(fenster)
 	f.f.title = C.CString(title)
 	f.f.width = C.int(w)
 	f.f.height = C.int(h)
@@ -75,9 +74,9 @@ func (f *fenster) Open(w, h int, title string) error {
 	f.buf = unsafe.Slice((*uint32)(f.f.buf), w*h)
 	res := C.fenster_open(&f.f)
 	if res != 0 {
-		return fmt.Errorf("failed to open window: %d", res)
+		return nil, fmt.Errorf("failed to open window: %d", res)
 	}
-	return nil
+	return f, nil
 }
 func (f *fenster) Loop() bool { return C.fenster_loop(&f.f) == 0 }
 func (f *fenster) Close()     { C.fenster_close(&f.f) }

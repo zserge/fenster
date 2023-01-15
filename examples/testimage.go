@@ -24,8 +24,10 @@ func openImage(fname string) (image.Image, error) {
 }
 
 func main() {
-	f := fenster.New()
-	f.Open(320, 240, "Hello")
+	f, err := fenster.New(320, 240, "Hello")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer f.Close()
 	lastFrame := time.Now()
 
