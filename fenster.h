@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #if defined(__APPLE__)
-#include <AudioToolbox/AudioQueue.h>
 #include <CoreGraphics/CoreGraphics.h>
 #include <objc/NSObjCRuntime.h>
 #include <objc/objc-runtime.h>
@@ -36,7 +35,9 @@ struct fenster {
 #endif
 };
 
-#define FENSTER_API static
+#ifndef FENSTER_API
+#define FENSTER_API extern
+#endif
 FENSTER_API int fenster_open(struct fenster *f);
 FENSTER_API int fenster_loop(struct fenster *f);
 FENSTER_API void fenster_close(struct fenster *f);
@@ -44,6 +45,7 @@ FENSTER_API void fenster_sleep(int64_t ms);
 FENSTER_API int64_t fenster_time();
 #define fenster_pixel(f, x, y) ((f)->buf[((y) * (f)->width) + (x)])
 
+#ifndef FENSTER_HEADER
 #if defined(__APPLE__)
 #define msg(r, o, s) ((r(*)(id, SEL))objc_msgSend)(o, sel_getUid(s))
 #define msg1(r, o, s, A, a)                                                    \
@@ -292,4 +294,5 @@ FENSTER_API int64_t fenster_time() {
 }
 #endif
 
+#endif /* !FENSTER_HEADER */
 #endif /* FENSTER_H */

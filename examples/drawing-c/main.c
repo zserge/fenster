@@ -4,49 +4,6 @@
 #define H 240
 
 /* ============================================================
- * A very minimal example of a Fenster app:
- * - Opens a window
- * - Starts a loop
- * - Changes pixel colours based on some "shader" formula
- * - Sleeps if needed to maintain a frame rate of 60 FPS
- * - Closes a window
- * ============================================================ */
-static int demo_minimal_framebuffer() {
-  uint32_t buf[W * H];
-  struct fenster f = {
-      .title = "hello",
-      .width = W,
-      .height = H,
-      .buf = buf,
-  };
-  fenster_open(&f);
-  uint32_t t = 0;
-  int64_t now = fenster_time();
-  while (fenster_loop(&f) == 0) {
-    t++;
-    for (int i = 0; i < 320; i++) {
-      for (int j = 0; j < 240; j++) {
-        /* White noise: */
-        /* fenster_pixel(&f, i, j) = (rand() << 16) ^ (rand() << 8) ^ rand(); */
-
-        /* Colourful and moving: */
-        /* fenster_pixel(&f, i, j) = i * j * t; */
-
-        /* Munching squares: */
-        fenster_pixel(&f, i, j) = i ^ j ^ t;
-      }
-    }
-    int64_t time = fenster_time();
-    if (time - now < 1000 / 60) {
-      fenster_sleep(time - now);
-    }
-    now = time;
-  }
-  fenster_close(&f);
-  return 0;
-}
-
-/* ============================================================
  * An example of using raster graphics with Fenster
  * - Line: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
  * - Circle: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
@@ -130,7 +87,7 @@ static void fenster_text(struct fenster *f, int x, int y, char *s, int scale,
   }
 }
 
-static int demo_raster_graphics() {
+static int run() {
   uint32_t buf[W * H];
   struct fenster f = {
       .title = "hello",
@@ -159,69 +116,6 @@ static int demo_raster_graphics() {
   }
   fenster_close(&f);
   return 0;
-}
-
-/* ============================================================
- * Another small example demostrating keymaps/keycodes:
- * - On all platforms keys usually correspond to upper-case ASCII
- * - Enter code is 10, Tab is 9, Backspace is 8, Escape is 27
- * - Delete is 127, Space is 32
- * - Modifiers are: Ctrl=1, Shift=2, Ctrl+Shift=3
- *
- * This demo prints currently pressed keys with modifiers.
- * ============================================================ */
-static int demo_keys() {
-  uint32_t buf[W * H] = {0};
-  struct fenster f = {
-      .title = "Press any key...",
-      .width = W,
-      .height = H,
-      .buf = buf,
-  };
-  fenster_open(&f);
-  int64_t now = fenster_time();
-  while (fenster_loop(&f) == 0) {
-    int has_keys = 0;
-    char s[32];
-    char *p = s;
-    for (int i = 0; i < 128; i++) {
-      if (f.keys[i]) {
-        has_keys = 1;
-        *p++ = i;
-      }
-    }
-    *p = '\0';
-    fenster_rect(&f, 8, 8, W, 100, 0);
-    fenster_text(&f, 8, 8, s, 4, 0xffffff);
-    if (has_keys) {
-      if (f.mod & 1) {
-        fenster_text(&f, 8, 40, "Ctrl", 4, 0xffffff);
-      }
-      if (f.mod & 2) {
-        fenster_text(&f, 8, 80, "Shift", 4, 0xffffff);
-      }
-    }
-    if (f.keys[27]) {
-      break;
-    }
-    int64_t time = fenster_time();
-    if (time - now < 1000 / 60) {
-      fenster_sleep(time - now);
-    }
-    now = time;
-  }
-  fenster_close(&f);
-  return 0;
-}
-
-static int run() {
-  (void)demo_minimal_framebuffer;
-  (void)demo_raster_graphics;
-  (void)demo_keys;
-
-  /*return demo_minimal_framebuffer();*/
-  return demo_raster_graphics();
-  /*return demo_keys();*/
 }
 
 #if defined(_WIN32)

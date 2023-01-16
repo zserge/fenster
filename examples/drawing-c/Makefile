@@ -11,5 +11,5 @@ else
 	endif
 endif
 
-example: examples/example.c fenster.h
-	$(CC) examples/example.c -I. -Os -o $@ $(CFLAGS) $(LDFLAGS)
+main: main.c ../../fenster.h
+	$(CC) main.c -I../.. -o $@ $(CFLAGS) $(LDFLAGS)
