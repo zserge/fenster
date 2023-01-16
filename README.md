@@ -13,12 +13,12 @@ This library provides the most minimal and highly opinionated way to display a c
 * Cross-platform timers to have a stable FPS rate.
 * It's a single header in plain C99 of ~300LOC with no memory allocations.
 * Go bindings (`import "github.com/zserge/fenster"`)
+* Zig bindings (see [examples/minimal-zig](/examples/minimal-zig))
 
 ## What it might do for you in the next version
 
 * Mouse events (at least left button click + XY)
 * Audio playback (WinMM, CoreAudio, ALSA)
-* Bindings for other programming languages
 
 ## What it will never do for you
 
@@ -33,6 +33,7 @@ In other words, you get a single super tiny C file, with a very simple API and i
 Here's how to draw white noise:
 
 ```c
+// main.c
 #include "fenster.h"
 #define W 320
 #define H 240
@@ -60,7 +61,7 @@ cc main.c -lX11 -o main && ./main
 # macOS
 cc main.c -framework Cocoa -o main && ./main
 # windows
-# TODO, but link with -lgdi32
+cc main.c -lgdi32 -o main.exe && main.exe
 ```
 
 That's it.
