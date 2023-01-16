@@ -12,7 +12,7 @@ This library provides the most minimal and highly opinionated way to display a c
 * Cross-platform keyboard events (keycodes).
 * Cross-platform timers to have a stable FPS rate.
 * It's a single header in plain C99 of ~300LOC with no memory allocations.
-* Go bindings (`import "github.com/zserge/fenster"`)
+* Go bindings (`import "github.com/zserge/fenster"`, see [godoc](https://pkg.go.dev/github.com/zserge/fenster))
 * Zig bindings (see [examples/minimal-zig](/examples/minimal-zig))
 
 ## What it might do for you in the next version
