@@ -24,10 +24,11 @@ func openImage(fname string) (image.Image, error) {
 }
 
 func main() {
-	f := fenster.New()
-	f.Open(320, 240, "Hello")
+	f, err := fenster.New(320, 240, "Hello")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer f.Close()
-	lastFrame := time.Now()
 
 	img, err := openImage("testdata/Testbild.png")
 	if err != nil {
@@ -38,7 +39,7 @@ func main() {
 	pimg := image.NewPaletted(img.Bounds(), palette.Plan9)
 	draw.Draw(pimg, pimg.Bounds(), img, image.Point{}, draw.Src)
 
-	for f.Loop() {
+	for f.Loop(time.Second / 24) {
 		// If escape is pressed - exit
 		if f.Key(27) {
 			break
@@ -47,12 +48,5 @@ func main() {
 		// rotate palette
 		pimg.Palette = append(pimg.Palette[1:], pimg.Palette[0])
 		draw.Draw(f, f.Bounds(), pimg, image.Point{}, draw.Src)
-
-		// Wait for FPS rate
-		sleep := 16*time.Millisecond - time.Since(lastFrame)
-		if sleep > 0 {
-			time.Sleep(sleep)
-		}
-		lastFrame = time.Now()
 	}
 }
