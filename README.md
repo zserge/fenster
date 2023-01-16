@@ -87,7 +87,7 @@ struct fenster {
 * `fenster_pixel(f, x, y) = 0xRRGGBB` - set pixel color.
 * `uint32_t px = fenster_pixel(f, x, y);` - get pixel color.
 
-See `example.c` for more old-school drawing primitives, but also feel free to experiment with your own graphical algorithms!
+See [examples/drawing-c](/examples/drawing-c) for more old-school drawing primitives, but also feel free to experiment with your own graphical algorithms!
 
 ## License
 
