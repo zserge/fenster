@@ -1,8 +1,6 @@
 #ifndef FENSTER_H
 #define FENSTER_H
 
-#include <stdint.h>
-
 #if defined(__APPLE__)
 #include <CoreGraphics/CoreGraphics.h>
 #include <objc/NSObjCRuntime.h>
@@ -10,11 +8,15 @@
 #elif defined(_WIN32)
 #include <windows.h>
 #else
+#define _DEFAULT_SOURCE 1
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <time.h>
 #endif
+
+#include <stdlib.h>
+#include <stdint.h>
 
 struct fenster {
   const char *title;
@@ -263,7 +265,7 @@ FENSTER_API int fenster_loop(struct fenster *f) {
           break;
         }
       }
-      f->mod = !!(m & ControlMask) | (!!(m & ShiftMask) << 1) |
+      f->mod = (!!(m & ControlMask)) | (!!(m & ShiftMask) << 1) |
                (!!(m & Mod1Mask) << 2) | (!!(m & Mod4Mask) << 3);
     } break;
     }

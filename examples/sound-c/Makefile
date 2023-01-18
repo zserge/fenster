@@ -7,9 +7,9 @@ else
 	ifeq ($(UNAME_S),Darwin)
 		LDFLAGS = -framework Cocoa -framework AudioToolbox
 	else
-		LDFLAGS = -lX11
+		LDFLAGS = -lX11 -lasound
 	endif
 endif
 
-main: main.c ../../fenster.h
+main: main.c ../../fenster.h ../../fenster_audio.h
 	$(CC) main.c -I../.. -o $@ $(CFLAGS) $(LDFLAGS)

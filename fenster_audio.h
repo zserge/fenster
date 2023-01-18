@@ -6,7 +6,7 @@
 #endif
 
 #ifndef FENSTER_AUDIO_BUFSZ
-#define FENSTER_AUDIO_BUFSZ 4096
+#define FENSTER_AUDIO_BUFSZ 8192
 #endif
 
 #if defined(__APPLE__)
@@ -21,7 +21,11 @@ struct fenster_audio {
 #elif defined(_WIN32)
 struct fenster_audio {};
 #elif defined(__linux__)
-struct fenster_audio {};
+struct fenster_audio {
+  void *pcm;
+  float buf[FENSTER_AUDIO_BUFSZ];
+  size_t pos;
+};
 #endif
 
 #ifndef FENSTER_API
@@ -89,12 +93,28 @@ FENSTER_API void fenster_audio_write(struct fenster_audio *f, float *buf,
                                      size_t n) {}
 FENSTER_API void fenster_audio_close(struct fenster_audio *f) {}
 #elif defined(__linux__)
-#else
-FENSTER_API int fenster_audio_open(struct fenster_audio *f) { return -1; }
-FENSTER_API int fenster_audio_available(struct fenster_audio *f) { return -1; }
-FENSTER_API void fenster_audio_write(struct fenster_audio *f, float *buf,
-                                     size_t n) {}
-FENSTER_API void fenster_audio_close(struct fenster_audio *f) {}
+int snd_pcm_open(void **, const char *, int, int);
+int snd_pcm_set_params(void *, int, int, int, int, int, int);
+int snd_pcm_avail(void *);
+int snd_pcm_writei(void *, const void *, unsigned long);
+int snd_pcm_recover(void *, int, int);
+int snd_pcm_close(void *);
+FENSTER_API int fenster_audio_open(struct fenster_audio *fa) {
+  if (snd_pcm_open(&fa->pcm, "default", 0, 0)) return -1;
+  int fmt = (*(unsigned char *)(&(uint16_t){1}))?14:15;
+  return snd_pcm_set_params(fa->pcm, fmt, 3, 1, FENSTER_SAMPLE_RATE, 1, 100000);
+}
+FENSTER_API int fenster_audio_available(struct fenster_audio *fa) {
+  int n = snd_pcm_avail(fa->pcm); 
+  if (n < 0) snd_pcm_recover(fa->pcm, n, 0);
+  return n;
+}
+FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
+                                     size_t n) {
+  int r = snd_pcm_writei(fa->pcm, buf, n);
+  if (r < 0) snd_pcm_recover(fa->pcm, r, 0);
+}
+FENSTER_API void fenster_audio_close(struct fenster_audio *fa) { snd_pcm_close(fa->pcm); }
 #endif
 
 #endif /* FENSTER_HEADER */
