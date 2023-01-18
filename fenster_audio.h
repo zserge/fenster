@@ -25,7 +25,7 @@ struct fenster_audio {
   WAVEHDR header;
   HWAVEOUT wo;
   WAVEHDR hdr[2];
-  char buf[2][FENSTER_AUDIO_BUFSZ];
+  int16_t buf[2][FENSTER_AUDIO_BUFSZ];
 };
 #elif defined(__linux__)
 struct fenster_audio {
@@ -93,14 +93,13 @@ FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
   }
 }
 #elif defined(_WIN32)
-/* TODO */
 FENSTER_API int fenster_audio_open(struct fenster_audio *fa) {
   WAVEFORMATEX wfx = {
-      WAVE_FORMAT_PCM, 1, FENSTER_SAMPLE_RATE, FENSTER_SAMPLE_RATE, 1, 8, 0};
+      WAVE_FORMAT_PCM, 1, FENSTER_SAMPLE_RATE, FENSTER_SAMPLE_RATE*2, 1, 16, 0};
   waveOutOpen(&fa->wo, WAVE_MAPPER, &wfx, 0, 0, CALLBACK_NULL);
   for (int i = 0; i < 2; i++) {
     fa->hdr[i].lpData = fa->buf[i];
-    fa->hdr[i].dwBufferLength = FENSTER_AUDIO_BUFSZ;
+    fa->hdr[i].dwBufferLength = FENSTER_AUDIO_BUFSZ*2;
     waveOutPrepareHeader(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
     waveOutWrite(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
   }
@@ -117,7 +116,7 @@ FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
   for (int i = 0; i < 2; i++) {
     if (fa->hdr[i].dwFlags & WHDR_DONE) {
       for (unsigned j = 0; j < n; j++) {
-        fa->buf[i][j] = (uint8_t)(buf[j] * 256);
+        fa->buf[i][j] = (int16_t) (buf[j]*32767);
       }
       waveOutWrite(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
       return;
