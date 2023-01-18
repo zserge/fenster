@@ -20,25 +20,26 @@ static int run() {
       .height = H,
       .buf = buf,
   };
-	struct fenster_audio fa = {0};
+  struct fenster_audio fa = {0};
   fenster_open(&f);
-	fenster_audio_open(&fa);
+  fenster_audio_open(&fa);
   uint32_t t, u = 0;
-	float audio[FENSTER_AUDIO_BUFSZ];
+  float audio[FENSTER_AUDIO_BUFSZ];
   int64_t now = fenster_time();
   while (fenster_loop(&f) == 0) {
     t++;
-		int n = fenster_audio_available(&fa);
-		if (n > 0) {
-			for (int i = 0; i < n; i++) {
-				u++;
-				/*audio[i] = (rand() & 0xff)/256.f;*/
-				int x = u * 80/441;
-				audio[i] = ((((x >> 10) & 42) * x)&0xff)/256.f;
-			}
-			fenster_audio_write(&fa, audio, n);
-		}
-		if (f.keys[27]) break;
+    int n = fenster_audio_available(&fa);
+    if (n > 0) {
+      for (int i = 0; i < n; i++) {
+        u++;
+        /*audio[i] = (rand() & 0xff)/256.f;*/
+        int x = u * 80 / 441;
+        audio[i] = ((((x >> 10) & 42) * x) & 0xff) / 256.f;
+      }
+      fenster_audio_write(&fa, audio, n);
+    }
+    if (f.keys[27])
+      break;
 
     for (int i = 0; i < 320; i++) {
       for (int j = 0; j < 240; j++) {
@@ -54,11 +55,11 @@ static int run() {
     }
     int64_t time = fenster_time();
     if (time - now < 1000 / 60) {
-			fenster_sleep(time - now);
+      fenster_sleep(time - now);
     }
     now = time;
   }
-	fenster_audio_close(&fa);
+  fenster_audio_close(&fa);
   fenster_close(&f);
   return 0;
 }
