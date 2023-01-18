@@ -15,8 +15,8 @@
 #include <time.h>
 #endif
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 struct fenster {
   const char *title;
@@ -25,6 +25,9 @@ struct fenster {
   uint32_t *buf;
   int keys[256]; /* keys are mostly ASCII, but arrows are 17..20 */
   int mod;       /* mod is 4 bits mask, ctrl=1, shift=2, alt=4, meta=8 */
+  int x;
+  int y;
+  int mouse;
 #if defined(__APPLE__)
   id wnd;
 #elif defined(_WIN32)
@@ -136,6 +139,19 @@ FENSTER_API int fenster_loop(struct fenster *f) {
     return 0;
   NSUInteger evtype = msg(NSUInteger, ev, "type");
   switch (evtype) {
+  case 1: /* NSEventTypeMouseDown */
+    f->mouse |= 1;
+    return 0;
+  case 2: /* NSEventTypeMouseUp*/
+    f->mouse &= ~1;
+    return 0;
+  case 5:
+  case 6: { /* NSEventTypeMouseMoved */
+    CGPoint xy = msg(CGPoint, ev, "locationInWindow");
+    f->x = (int)xy.x;
+    f->y = (int)(f->height - xy.y);
+    return 0;
+  }
   case 10: /*NSEventTypeKeyDown*/
   case 11: /*NSEventTypeKeyUp:*/ {
     NSUInteger k = msg(NSUInteger, ev, "keyCode");

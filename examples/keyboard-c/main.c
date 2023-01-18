@@ -63,7 +63,11 @@ static int run() {
       }
     }
     *p = '\0';
-    fenster_rect(&f, 8, 8, W, 100, 0);
+    fenster_rect(&f, 0, 0, W, H, 0);
+    /* draw mouse "pointer" */
+    if (f.x > 5 && f.y > 5 && f.x < f.width - 5 && f.y < f.height - 5) {
+      fenster_rect(&f, f.x - 3, f.y - 3, 6, 6, f.mouse ? 0xffffff : 0xff0000);
+    }
     fenster_text(&f, 8, 8, s, 4, 0xffffff);
     if (has_keys) {
       if (f.mod & 1) {
