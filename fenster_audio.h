@@ -1,0 +1,101 @@
+#ifndef FENSTER_AUDIO_H
+#define FENSTER_AUDIO_H
+
+#ifndef FENSTER_SAMPLE_RATE
+#define FENSTER_SAMPLE_RATE 44100
+#endif
+
+#ifndef FENSTER_AUDIO_BUFSZ
+#define FENSTER_AUDIO_BUFSZ 4096
+#endif
+
+#if defined(__APPLE__)
+#include <AudioToolbox/AudioQueue.h>
+struct fenster_audio {
+  AudioQueueRef queue;
+  size_t pos;
+  float buf[FENSTER_AUDIO_BUFSZ];
+  dispatch_semaphore_t drained;
+  dispatch_semaphore_t full;
+};
+#elif defined(_WIN32)
+struct fenster_audio {};
+#elif defined(__linux__)
+struct fenster_audio {};
+#endif
+
+#ifndef FENSTER_API
+#define FENSTER_API extern
+#endif
+FENSTER_API int fenster_audio_open(struct fenster_audio *f);
+FENSTER_API int fenster_audio_available(struct fenster_audio *f);
+FENSTER_API void fenster_audio_write(struct fenster_audio *f, float *buf,
+                                     size_t n);
+FENSTER_API void fenster_audio_close(struct fenster_audio *f);
+
+#ifndef FENSTER_HEADER
+#if defined(__APPLE__)
+static void fenster_audio_cb(void *p, AudioQueueRef q, AudioQueueBufferRef b) {
+  struct fenster_audio *fa = (struct fenster_audio *)p;
+  dispatch_semaphore_wait(fa->full, DISPATCH_TIME_FOREVER);
+  memmove(b->mAudioData, fa->buf, sizeof(fa->buf));
+  dispatch_semaphore_signal(fa->drained);
+  AudioQueueEnqueueBuffer(q, b, 0, NULL);
+}
+FENSTER_API int fenster_audio_open(struct fenster_audio *fa) {
+  AudioStreamBasicDescription format = {0};
+  format.mSampleRate = FENSTER_SAMPLE_RATE;
+  format.mFormatID = kAudioFormatLinearPCM;
+  format.mFormatFlags = kLinearPCMFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+  format.mBitsPerChannel = 32;
+  format.mFramesPerPacket = format.mChannelsPerFrame = 1;
+  format.mBytesPerPacket = format.mBytesPerFrame = 4;
+  fa->drained = dispatch_semaphore_create(1);
+  fa->full = dispatch_semaphore_create(0);
+  AudioQueueNewOutput(&format, fenster_audio_cb, fa, NULL, NULL, 0, &fa->queue);
+  for (int i = 0; i < 2; i++) {
+    AudioQueueBufferRef buffer = NULL;
+    AudioQueueAllocateBuffer(fa->queue, FENSTER_AUDIO_BUFSZ * 4, &buffer);
+    buffer->mAudioDataByteSize = FENSTER_AUDIO_BUFSZ * 4;
+    memset(buffer->mAudioData, 0, buffer->mAudioDataByteSize);
+    AudioQueueEnqueueBuffer(fa->queue, buffer, 0, NULL);
+  }
+  AudioQueueStart(fa->queue, NULL);
+}
+FENSTER_API void fenster_audio_close(struct fenster_audio *fa) {
+  AudioQueueStop(fa->queue, false);
+  AudioQueueDispose(fa->queue, false);
+}
+FENSTER_API int fenster_audio_available(struct fenster_audio *fa) {
+  if (dispatch_semaphore_wait(fa->drained, DISPATCH_TIME_NOW))
+    return 0;
+  return FENSTER_AUDIO_BUFSZ - fa->pos;
+}
+FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
+                                     size_t n) {
+  while (fa->pos < FENSTER_AUDIO_BUFSZ && n > 0) {
+    fa->buf[fa->pos++] = *buf++, n--;
+  }
+  if (fa->pos >= FENSTER_AUDIO_BUFSZ) {
+    fa->pos = 0;
+    dispatch_semaphore_signal(fa->full);
+  }
+}
+#elif defined(_WIN32)
+/* TODO */
+FENSTER_API int fenster_audio_open(struct fenster_audio *f) { return -1; }
+FENSTER_API int fenster_audio_available(struct fenster_audio *f) { return -1; }
+FENSTER_API void fenster_audio_write(struct fenster_audio *f, float *buf,
+                                     size_t n) {}
+FENSTER_API void fenster_audio_close(struct fenster_audio *f) {}
+#elif defined(__linux__)
+#else
+FENSTER_API int fenster_audio_open(struct fenster_audio *f) { return -1; }
+FENSTER_API int fenster_audio_available(struct fenster_audio *f) { return -1; }
+FENSTER_API void fenster_audio_write(struct fenster_audio *f, float *buf,
+                                     size_t n) {}
+FENSTER_API void fenster_audio_close(struct fenster_audio *f) {}
+#endif
+
+#endif /* FENSTER_HEADER */
+#endif /* FENSTER_AUDIO_H */
