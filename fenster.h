@@ -193,6 +193,13 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
   case WM_CLOSE:
     DestroyWindow(hwnd);
     break;
+  case WM_LBUTTONDOWN:
+  case WM_LBUTTONUP:
+    f->mouse = (msg == WM_LBUTTONDOWN);
+    break;
+  case WM_MOUSEMOVE:
+    f->y = HIWORD(lParam), f->x = LOWORD(lParam);
+    break;
   case WM_KEYDOWN:
   case WM_KEYUP: {
     f->mod = ((GetKeyState(VK_CONTROL) & 0x8000) >> 15) |
