@@ -72,6 +72,7 @@ FENSTER_API int fenster_audio_open(struct fenster_audio *fa) {
     AudioQueueEnqueueBuffer(fa->queue, buffer, 0, NULL);
   }
   AudioQueueStart(fa->queue, NULL);
+  return 0;
 }
 FENSTER_API void fenster_audio_close(struct fenster_audio *fa) {
   AudioQueueStop(fa->queue, false);

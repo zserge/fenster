@@ -23,7 +23,7 @@ static int run() {
   struct fenster_audio fa = {0};
   fenster_open(&f);
   fenster_audio_open(&fa);
-  uint32_t t, u = 0;
+  uint32_t t = 0, u = 0;
   float audio[FENSTER_AUDIO_BUFSZ];
   int64_t now = fenster_time();
   while (fenster_loop(&f) == 0) {
