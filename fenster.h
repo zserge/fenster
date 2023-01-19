@@ -262,7 +262,7 @@ FENSTER_API int fenster_open(struct fenster *f) {
                              f->height, 0, BlackPixel(f->dpy, screen),
                              WhitePixel(f->dpy, screen));
   f->gc = XCreateGC(f->dpy, f->w, 0, 0);
-  XSelectInput(f->dpy, f->w, ExposureMask | KeyPressMask | KeyReleaseMask);
+  XSelectInput(f->dpy, f->w, ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
   XStoreName(f->dpy, f->w, f->title);
   XMapWindow(f->dpy, f->w);
   XSync(f->dpy, f->w);
@@ -278,6 +278,13 @@ FENSTER_API int fenster_loop(struct fenster *f) {
   while (XPending(f->dpy)) {
     XNextEvent(f->dpy, &ev);
     switch (ev.type) {
+    case ButtonPress:
+    case ButtonRelease:
+      f->mouse = (ev.type == ButtonPress);
+      break;
+    case MotionNotify:
+      f->x = ev.xmotion.x, f->y = ev.xmotion.y;
+      break;
     case KeyPress:
     case KeyRelease: {
       int m = ev.xkey.state;
