@@ -2,7 +2,7 @@
 
 Fenster /ˈfɛnstɐ/ -- a German word for "window".
 
-This library provides the most minimal and highly opinionated way to display a cross-platform 2D canvas. If you remember Borland BGI or drawing things in QBASIC or `INT 10h`- you know what I mean.
+This library provides the most minimal and highly opinionated way to display a cross-platform 2D canvas. If you remember Borland BGI or drawing things in QBASIC or `INT 10h`- you know what I mean. As a nice bonus you also get cross-platform keyboard/mouse input and audio playback in only a few lines of code.
 
 ## What it does for you
 
@@ -10,23 +10,14 @@ This library provides the most minimal and highly opinionated way to display a c
 * Application lifecycle and system events are all handled automatically.
 * Minimal 24-bit RGB framebuffer.
 * Cross-platform keyboard events (keycodes).
+* Cross-platform mouse events (X/Y + mouse click).
 * Cross-platform timers to have a stable FPS rate.
-* It's a single header in plain C99 of ~300LOC with no memory allocations.
+* Cross-platform audio playback (WinMM, CoreAudio, ALSA).
+* Simple polling API without a need for callbacks or multithreading (like Arduino/Processing).
+* One C99 header of ~300LOC, easy to understand and extend.
 * Go bindings (`import "github.com/zserge/fenster"`, see [godoc](https://pkg.go.dev/github.com/zserge/fenster))
 * Zig bindings (see [examples/minimal-zig](/examples/minimal-zig))
-
-## What it might do for you in the next version
-
-* Mouse events (at least left button click + XY)
-* Audio playback (WinMM, CoreAudio, ALSA)
-
-## What it will never do for you
-
-* GUI widgets - use Qt or Gtk or WxWidgets.
-* Complex drawing routines or OpenGL - use Sokol or MiniFB or Tigr.
-* Low-latency audio - use PortAudio, RtAudio, libsoundio etc.
-
-In other words, you get a single super tiny C file, with a very simple API and it allows you to build graphical apps (simple games, emulators) in a very low-level retrocomputing manner.
+* And, yes, it can run Doom!
 
 ## Example
 
@@ -57,16 +48,18 @@ Compile it and run:
 
 ```
 # Linux
-cc main.c -lX11 -o main && ./main
+cc main.c -lX11 -lasound -o main && ./main
 # macOS
-cc main.c -framework Cocoa -o main && ./main
+cc main.c -framework Cocoa -framework AudioToolbox -o main && ./main
 # windows
-cc main.c -lgdi32 -o main.exe && main.exe
+cc main.c -lgdi32 -lwinmm -o main.exe && main.exe
 ```
 
 That's it.
 
 ## API
+
+API is designed to be a polling loop, where on every iteration the framebuffer get updated and the user input (mouse/keyboard) can be polled.
 
 ```c
 struct fenster {
@@ -76,6 +69,9 @@ struct fenster {
   uint32_t *buf; /* window pixels, 24-bit RGB, row by row, pixel by pixel */
   int keys[256]; /* keys are mostly ASCII, but arrows are 17..20 */
   int mod;       /* mod is 4 bits mask, ctrl=1, shift=2, alt=4, meta=8 */
+  int x;         /* mouse X coordinate */
+  int y;         /* mouse Y coordinate */
+  int mouse;     /* 0 = no buttons pressed, 1 = left button pressed */
 };
 ```
 
