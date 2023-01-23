@@ -262,7 +262,9 @@ FENSTER_API int fenster_open(struct fenster *f) {
                              f->height, 0, BlackPixel(f->dpy, screen),
                              WhitePixel(f->dpy, screen));
   f->gc = XCreateGC(f->dpy, f->w, 0, 0);
-  XSelectInput(f->dpy, f->w, ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+  XSelectInput(f->dpy, f->w,
+               ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask |
+                   ButtonReleaseMask | PointerMotionMask);
   XStoreName(f->dpy, f->w, f->title);
   XMapWindow(f->dpy, f->w);
   XSync(f->dpy, f->w);
