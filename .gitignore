@@ -1,5 +1,10 @@
-/example
+main
+a.out
 *.o
 *.elf
 *.exe
 *.dSYM/
+*.pdb
+zig-cache
+zig-out
+Makefile.local
