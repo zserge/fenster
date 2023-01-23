@@ -34,3 +34,6 @@ $(OBJDIR):
 $(OBJDIR)/%.o:	%.c
 	@echo [Compiling $<]
 	$(CC) $(CFLAGS) -c $< -o $@
+x:
+	@echo $(SRC_DOOM)
+

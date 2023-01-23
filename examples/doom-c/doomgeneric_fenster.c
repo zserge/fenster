@@ -1,4 +1,4 @@
-#include "../../../fenster.h"
+#include "../../fenster.h"
 #include "doomgeneric.h"
 #include "doomkeys.h"
 

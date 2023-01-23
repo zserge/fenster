@@ -1,6 +1,9 @@
 # Doom on Fenster
 
-1. Download DoomGeneric: https://github.com/ozkl/doomgeneric
-2. Unpack all source files (`*.c`, `*.h`)into this directory.
-3. `make -f Makefile.fenster`
-4. `./doomgeneric`
+This is based on https://github.com/ozkl/doomgeneric/.
+
+Fenster port only is only 50 LOC!
+
+1. `make -f Makefile.fenster`
+2. Put some `doom.wad` into this directory.
+3. `./doomgeneric`
