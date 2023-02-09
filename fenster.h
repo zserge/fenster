@@ -141,10 +141,10 @@ FENSTER_API int fenster_loop(struct fenster *f) {
   switch (evtype) {
   case 1: /* NSEventTypeMouseDown */
     f->mouse |= 1;
-    return 0;
+    break;
   case 2: /* NSEventTypeMouseUp*/
     f->mouse &= ~1;
-    return 0;
+    break;
   case 5:
   case 6: { /* NSEventTypeMouseMoved */
     CGPoint xy = msg(CGPoint, ev, "locationInWindow");
