@@ -178,7 +178,7 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
     HDC memdc = CreateCompatibleDC(hdc);
     HBITMAP hbmp = CreateCompatibleBitmap(hdc, f->width, f->height);
     HBITMAP oldbmp = SelectObject(memdc, hbmp);
-    BITMAPINFO bi = {{sizeof(bi), f->width, -f->height, 1, 32, BI_BITFIELDS}};
+    BITMAPINFO bi = {{sizeof(bi), f->width, -f->height, 1, 32, BI_RGB}};
     bi.bmiColors[0].rgbRed = 0xff;
     bi.bmiColors[1].rgbGreen = 0xff;
     bi.bmiColors[2].rgbBlue = 0xff;
@@ -306,7 +306,7 @@ FENSTER_API int fenster_loop(struct fenster *f) {
 }
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 FENSTER_API void fenster_sleep(int64_t ms) { Sleep(ms); }
 FENSTER_API int64_t fenster_time() {
   LARGE_INTEGER freq, count;
