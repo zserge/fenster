@@ -22,8 +22,13 @@ struct fenster {
   const char *title;
   const int width;
   const int height;
+//	needed for window scaling
   int display_width;
   int display_height;
+	int xorigin;
+	int yorigin;
+	float scale;
+// end of addition.	
   uint32_t *buf;
   int keys[256]; /* keys are mostly ASCII, but arrows are 17..20 */
   int mod;       /* mod is 4 bits mask, ctrl=1, shift=2, alt=4, meta=8 */
@@ -178,7 +183,6 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
   struct fenster *f = (struct fenster *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch (msg) {
   case WM_PAINT: {
-  	float scale = MIN((float)f->display_width/f->width, (float)f->display_height/f->height);
     BITMAPINFO bmi = {
             .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
             .bmiHeader.biBitCount = 32,
@@ -187,13 +191,13 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
             .bmiHeader.biWidth = f->width,
             .bmiHeader.biHeight = -f->height
         };
-		int xorigin,yorigin,draw_width,draw_height;
-		draw_width = f->width*scale;
-		draw_height = f->height*scale;
-		xorigin=(f->display_width-draw_width)/2;
-		yorigin=(f->display_height-draw_height)/2;
+  	f->scale = MIN((float)f->display_width/f->width, (float)f->display_height/f->height);
+		int draw_width = f->width*f->scale;
+		int draw_height = f->height*f->scale;
+		f->xorigin=(f->display_width-draw_width)/2;
+		f->yorigin=(f->display_height-draw_height)/2;
 		StretchDIBits(GetDC(hwnd),
-				xorigin, yorigin, draw_width, draw_height,
+				f->xorigin, f->yorigin, draw_width, draw_height,
 				0, 0, f->width, f->height,
 				f->buf, &bmi, DIB_RGB_COLORS, SRCCOPY);
 		ValidateRect(hwnd,0);
@@ -218,7 +222,8 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
     f->mouse = (msg == WM_LBUTTONDOWN);
     break;
   case WM_MOUSEMOVE:
-    f->y = HIWORD(lParam), f->x = LOWORD(lParam);
+    f->y = ((float)HIWORD(lParam) - (float)f->yorigin)/f->scale;
+		f->x = ((float)LOWORD(lParam) - (float)f->xorigin)/f->scale;
     break;
   case WM_KEYDOWN:
   case WM_KEYUP: {
