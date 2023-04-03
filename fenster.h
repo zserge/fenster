@@ -206,7 +206,8 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
             .bmiHeader.biHeight = -f->height
         };
   	f->scale = MIN((float)f->display_width/f->width, (float)f->display_height/f->height);
-		f->scale = (int)f->scale;
+//	if you want integer scaling 
+//		f->scale = (int)f->scale;
 		int draw_width = f->width*f->scale;
 		int draw_height = f->height*f->scale;
 		f->xorigin=(f->display_width-draw_width)/2;
