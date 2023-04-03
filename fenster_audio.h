@@ -95,10 +95,22 @@ FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
 }
 #elif defined(_WIN32)
 FENSTER_API int fenster_audio_open(struct fenster_audio *fa) {
-  WAVEFORMATEX wfx = {WAVE_FORMAT_PCM, 1, FENSTER_SAMPLE_RATE, FENSTER_SAMPLE_RATE * 2, 1, 16, 0};
-  waveOutOpen(&fa->wo, WAVE_MAPPER, &wfx, 0, 0, CALLBACK_NULL);
+  WAVEFORMATEX wfx;
+	wfx.nSamplesPerSec = FENSTER_SAMPLE_RATE;
+	wfx.wBitsPerSample = 16;
+	wfx.nChannels = 1;
+	wfx.cbSize = 0;
+	wfx.wFormatTag = WAVE_FORMAT_PCM;
+	wfx.nBlockAlign = (wfx.wBitsPerSample >> 3) * wfx.nChannels;
+  wfx.nAvgBytesPerSec = wfx.nBlockAlign * wfx.nSamplesPerSec;
+
+  if( waveOutOpen( &fa->wo, WAVE_MAPPER, &wfx, 0, 0, CALLBACK_NULL ) != MMSYSERR_NOERROR )
+	{
+//		printf("audio failed\n");
+		return FALSE;
+	}
   for (int i = 0; i < 2; i++) {
-    fa->hdr[i].lpData = fa->buf[i];
+    fa->hdr[i].lpData = (LPSTR)fa->buf[i];
     fa->hdr[i].dwBufferLength = FENSTER_AUDIO_BUFSZ * 2;
     waveOutPrepareHeader(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
     waveOutWrite(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
@@ -118,7 +130,11 @@ FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
       for (unsigned j = 0; j < n; j++) {
         fa->buf[i][j] = (int16_t)(buf[j] * 32767);
       }
-      waveOutWrite(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
+			if (waveOutUnprepareHeader( fa->wo, &fa->hdr[i], sizeof( WAVEHDR ) ) != WAVERR_STILLPLAYING )
+			{
+		    waveOutPrepareHeader(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
+  	    waveOutWrite(fa->wo, &fa->hdr[i], sizeof(WAVEHDR));
+			}
       return;
     }
   }
