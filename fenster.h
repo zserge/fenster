@@ -182,6 +182,20 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
                                         LPARAM lParam) {
   struct fenster *f = (struct fenster *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch (msg) {
+	case WM_GETMINMAXINFO:
+	{
+		LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
+		if (f!=NULL)
+		{
+			RECT wr = {0, 0, 0, 0};
+			wr.right = f->width;
+			wr.bottom = f->height;
+			AdjustWindowRectEx(&wr, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_CLIENTEDGE);
+
+			lpMMI->ptMinTrackSize.x = wr.right-wr.left;
+			lpMMI->ptMinTrackSize.y = wr.bottom-wr.top;
+		}
+	}	break;	
   case WM_PAINT: {
     BITMAPINFO bmi = {
             .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
@@ -192,6 +206,7 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
             .bmiHeader.biHeight = -f->height
         };
   	f->scale = MIN((float)f->display_width/f->width, (float)f->display_height/f->height);
+		f->scale = (int)f->scale;
 		int draw_width = f->width*f->scale;
 		int draw_height = f->height*f->scale;
 		f->xorigin=(f->display_width-draw_width)/2;
@@ -245,6 +260,10 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
 FENSTER_API int fenster_open(struct fenster *f) {
   HINSTANCE hInstance = GetModuleHandle(NULL);
   WNDCLASSEX wc = {0};
+	RECT wr = {0, 0, 0, 0};
+  wr.right = f->width;
+  wr.bottom = f->height;
+	AdjustWindowRectEx(&wr, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_CLIENTEDGE);
   wc.cbSize = sizeof(WNDCLASSEX);
   wc.style = CS_VREDRAW | CS_HREDRAW;
   wc.lpfnWndProc = fenster_wndproc;
@@ -253,7 +272,7 @@ FENSTER_API int fenster_open(struct fenster *f) {
   RegisterClassEx(&wc);
   f->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, f->title, f->title,
                            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                           f->width, f->height, NULL, NULL, hInstance, NULL);
+                           wr.right-wr.left, wr.bottom-wr.top, NULL, NULL, hInstance, NULL);
 
   if (f->hwnd == NULL)
     return -1;
