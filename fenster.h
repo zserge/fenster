@@ -22,6 +22,8 @@ struct fenster {
   const char *title;
   const int width;
   const int height;
+  int display_width;
+  int display_height;
   uint32_t *buf;
   int keys[256]; /* keys are mostly ASCII, but arrows are 17..20 */
   int mod;       /* mod is 4 bits mask, ctrl=1, shift=2, alt=4, meta=8 */
@@ -165,6 +167,9 @@ FENSTER_API int fenster_loop(struct fenster *f) {
   return 0;
 }
 #elif defined(_WIN32)
+#ifndef MIN
+#define MIN(a, b) ((a)<(b)? (a) : (b))
+#endif
 // clang-format off
 static const uint8_t FENSTER_KEYCODES[] = {0,27,49,50,51,52,53,54,55,56,57,48,45,61,8,9,81,87,69,82,84,89,85,73,79,80,91,93,10,0,65,83,68,70,71,72,74,75,76,59,39,96,0,92,90,88,67,86,66,78,77,44,46,47,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,17,3,0,20,0,19,0,5,18,4,26,127};
 // clang-format on
@@ -173,23 +178,38 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
   struct fenster *f = (struct fenster *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch (msg) {
   case WM_PAINT: {
-    PAINTSTRUCT ps;
-    HDC hdc = BeginPaint(hwnd, &ps);
-    HDC memdc = CreateCompatibleDC(hdc);
-    HBITMAP hbmp = CreateCompatibleBitmap(hdc, f->width, f->height);
-    HBITMAP oldbmp = SelectObject(memdc, hbmp);
-    BITMAPINFO bi = {{sizeof(bi), f->width, -f->height, 1, 32, BI_RGB}};
-    bi.bmiColors[0].rgbRed = 0xff;
-    bi.bmiColors[1].rgbGreen = 0xff;
-    bi.bmiColors[2].rgbBlue = 0xff;
-    SetDIBitsToDevice(memdc, 0, 0, f->width, f->height, 0, 0, 0, f->height,
-                      f->buf, (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-    BitBlt(hdc, 0, 0, f->width, f->height, memdc, 0, 0, SRCCOPY);
-    SelectObject(memdc, oldbmp);
-    DeleteObject(hbmp);
-    DeleteDC(memdc);
-    EndPaint(hwnd, &ps);
+  	float scale = MIN((float)f->display_width/f->width, (float)f->display_height/f->height);
+    BITMAPINFO bmi = {
+            .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+            .bmiHeader.biBitCount = 32,
+            .bmiHeader.biCompression = BI_RGB,
+            .bmiHeader.biPlanes = 1,
+            .bmiHeader.biWidth = f->width,
+            .bmiHeader.biHeight = -f->height
+        };
+		int xorigin,yorigin,draw_width,draw_height;
+		draw_width = f->width*scale;
+		draw_height = f->height*scale;
+		xorigin=(f->display_width-draw_width)/2;
+		yorigin=(f->display_height-draw_height)/2;
+		StretchDIBits(GetDC(hwnd),
+				xorigin, yorigin, draw_width, draw_height,
+				0, 0, f->width, f->height,
+				f->buf, &bmi, DIB_RGB_COLORS, SRCCOPY);
+		ValidateRect(hwnd,0);
   } break;
+	case WM_SIZE:
+	{
+		f->display_width = LOWORD(lParam);
+		f->display_height = HIWORD(lParam);
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hwnd, &ps);
+		HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+		FillRect(hdc, &ps.rcPaint, brush);
+		DeleteObject(brush);
+		EndPaint(hwnd, &ps);
+		RedrawWindow(hwnd, 0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+	} break;
   case WM_CLOSE:
     DestroyWindow(hwnd);
     break;
