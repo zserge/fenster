@@ -182,7 +182,7 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
     HDC memdc = CreateCompatibleDC(hdc);
     HBITMAP hbmp = CreateCompatibleBitmap(hdc, f->width, f->height);
     HBITMAP oldbmp = SelectObject(memdc, hbmp);
-    BINFO bi = {{sizeof(bi), f->width, -f->height, 1, 32, BI_RGB}};
+    BINFO bi = {{sizeof(bi), f->width, -f->height, 1, 32, BI_BITFIELDS}};
     bi.bmiColors[0].rgbRed = 0xff;
     bi.bmiColors[1].rgbGreen = 0xff;
     bi.bmiColors[2].rgbBlue = 0xff;
