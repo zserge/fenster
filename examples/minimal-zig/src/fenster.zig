@@ -7,7 +7,7 @@ pub const Fenster = struct {
 };
 
 pub fn new(comptime w: i32, comptime h: i32, title: [:0]const u8) type {
-    var buf: [w*h]u32 = undefined;
+    var buf: [w * h]u32 = undefined;
     const f = .{
         .width = w,
         .height = h,
