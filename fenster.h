@@ -231,7 +231,7 @@ FENSTER_API int fenster_open(struct fenster *f) {
   wc.lpszClassName = f->title;
   RegisterClassEx(&wc);
   f->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, f->title, f->title,
-                           WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, CW_USEDEFAULT, CW_USEDEFAULT,
+                           (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU  | WS_MINIMIZEBOX), CW_USEDEFAULT, CW_USEDEFAULT,
                            f->width, f->height, NULL, NULL, hInstance, NULL);
 
   if (f->hwnd == NULL)
