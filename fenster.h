@@ -47,7 +47,7 @@ FENSTER_API int fenster_open(struct fenster *f);
 FENSTER_API int fenster_loop(struct fenster *f);
 FENSTER_API void fenster_close(struct fenster *f);
 FENSTER_API void fenster_sleep(int64_t ms);
-FENSTER_API int64_t fenster_time();
+FENSTER_API int64_t fenster_time(void);
 #define fenster_pixel(f, x, y) ((f)->buf[((y) * (f)->width) + (x)])
 
 #ifndef FENSTER_HEADER
@@ -325,7 +325,7 @@ FENSTER_API void fenster_sleep(int64_t ms) {
   ts.tv_nsec = (ms % 1000) * 1000000;
   nanosleep(&ts, NULL);
 }
-FENSTER_API int64_t fenster_time() {
+FENSTER_API int64_t fenster_time(void) {
   struct timespec time;
   clock_gettime(CLOCK_REALTIME, &time);
   return time.tv_sec * 1000 + (time.tv_nsec / 1000000);
