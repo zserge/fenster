@@ -21,8 +21,8 @@ pub fn main() void {
             break;
         }
         // Render x^y^t pattern
-        for (buf) |_, i| {
-            buf[i] = @intCast(u32, i % 320) ^ @intCast(u32, i / 240) ^ t;
+        for (buf, 0..) |_, i| {
+            buf[i] = @as(u32, @intCast(i % 320)) ^ @as(u32, @intCast(i / 240)) ^ t;
         }
         t +%= 1;
         // Keep ~60 FPS
