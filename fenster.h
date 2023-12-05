@@ -1,20 +1,6 @@
 #ifndef FENSTER_H
 #define FENSTER_H
 
-#if defined(__APPLE__)
-#include <CoreGraphics/CoreGraphics.h>
-#include <objc/NSObjCRuntime.h>
-#include <objc/objc-runtime.h>
-#elif defined(_WIN32)
-#include <windows.h>
-#else
-#define _DEFAULT_SOURCE 1
-#include <X11/XKBlib.h>
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
-#include <time.h>
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -32,7 +18,39 @@ struct fenster {
   int x;
   int y;
   int mouse;
+  void* backend;
+};
+
+#ifndef FENSTER_API
+#define FENSTER_API extern
+#endif
+#ifndef FENSTER_DLL
+#define FENSTER_DLL(name,...) name(__VA_ARGS__)
+#endif
+FENSTER_API void FENSTER_DLL(fenster_screen_size,int *width, int *height);
+FENSTER_API int FENSTER_DLL(fenster_open,struct fenster *f);
+FENSTER_API int FENSTER_DLL(fenster_loop,struct fenster *f);
+FENSTER_API void FENSTER_DLL(fenster_close,struct fenster *f);
+FENSTER_API void FENSTER_DLL(fenster_sleep,int64_t ms);
+FENSTER_API int64_t FENSTER_DLL(fenster_time,void);
+#define fenster_pixel(f, x, y) ((f)->buf[((y) * (f)->width) + (x)])
+
+#ifndef FENSTER_HEADER
 #if defined(__APPLE__)
+#include <CoreGraphics/CoreGraphics.h>
+#include <objc/NSObjCRuntime.h>
+#include <objc/objc-runtime.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#else
+#define _DEFAULT_SOURCE 1
+#include <X11/XKBlib.h>
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#include <time.h>
+#endif
+typedef struct{
+  #if defined(__APPLE__)
   id wnd;
 #elif defined(_WIN32)
   HWND hwnd;
@@ -42,20 +60,8 @@ struct fenster {
   GC gc;
   XImage *img;
 #endif
-};
+} backend_t;
 
-#ifndef FENSTER_API
-#define FENSTER_API extern
-#endif
-FENSTER_API void fenster_screen_size(int *width, int *height);
-FENSTER_API int fenster_open(struct fenster *f);
-FENSTER_API int fenster_loop(struct fenster *f);
-FENSTER_API void fenster_close(struct fenster *f);
-FENSTER_API void fenster_sleep(int64_t ms);
-FENSTER_API int64_t fenster_time(void);
-#define fenster_pixel(f, x, y) ((f)->buf[((y) * (f)->width) + (x)])
-
-#ifndef FENSTER_HEADER
 #if defined(__APPLE__)
 #define msg(r, o, s) ((r(*)(id, SEL))objc_msgSend)(o, sel_getUid(s))
 #define msg1(r, o, s, A, a)                                                    \
@@ -300,29 +306,35 @@ FENSTER_API void fenster_screen_size(int *width, int *height){
   XCloseDisplay(display);
 }
 FENSTER_API int fenster_open(struct fenster *f) {
-  f->dpy = XOpenDisplay(NULL);
-  int screen = DefaultScreen(f->dpy);
-  f->w = XCreateSimpleWindow(f->dpy, RootWindow(f->dpy, screen), 0, 0, f->width,
-                             f->height, 0, BlackPixel(f->dpy, screen),
-                             WhitePixel(f->dpy, screen));
-  f->gc = XCreateGC(f->dpy, f->w, 0, 0);
-  XSelectInput(f->dpy, f->w,
+  backend_t* b = malloc(sizeof(backend_t));
+  b->dpy = XOpenDisplay(NULL);
+  int screen = DefaultScreen(b->dpy);
+  b->w = XCreateSimpleWindow(b->dpy, RootWindow(b->dpy, screen), 0, 0, f->width,
+                             f->height, 0, BlackPixel(b->dpy, screen),
+                             WhitePixel(b->dpy, screen));
+  b->gc = XCreateGC(b->dpy, b->w, 0, 0);
+  XSelectInput(b->dpy, b->w,
                ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask |
                    ButtonReleaseMask | PointerMotionMask);
-  XStoreName(f->dpy, f->w, f->title);
-  XMapWindow(f->dpy, f->w);
-  XSync(f->dpy, f->w);
-  f->img = XCreateImage(f->dpy, DefaultVisual(f->dpy, 0), 24, ZPixmap, 0,
+  XStoreName(b->dpy, b->w, f->title);
+  XMapWindow(b->dpy, b->w);
+  XSync(b->dpy, b->w);
+  b->img = XCreateImage(b->dpy, DefaultVisual(b->dpy, 0), 24, ZPixmap, 0,
                         (char *)f->buf, f->width, f->height, 32, 0);
+  f->backend = b; 
   return 0;
 }
-FENSTER_API void fenster_close(struct fenster *f) { XCloseDisplay(f->dpy); }
+FENSTER_API void fenster_close(struct fenster *f) {
+  XCloseDisplay(((backend_t*)f->backend)->dpy); 
+  free(f->backend);
+}
 FENSTER_API int fenster_loop(struct fenster *f) {
+  backend_t* b = f->backend; 
   XEvent ev;
-  XPutImage(f->dpy, f->w, f->gc, f->img, 0, 0, 0, 0, f->width, f->height);
-  XFlush(f->dpy);
-  while (XPending(f->dpy)) {
-    XNextEvent(f->dpy, &ev);
+  XPutImage(b->dpy, b->w, b->gc, b->img, 0, 0, 0, 0, f->width, f->height);
+  XFlush(b->dpy);
+  while (XPending(b->dpy)) {
+    XNextEvent(b->dpy, &ev);
     switch (ev.type) {
     case ButtonPress:
       f->mouse |= 1 << (ev.xbutton.button -1);
@@ -336,7 +348,7 @@ FENSTER_API int fenster_loop(struct fenster *f) {
     case KeyPress:
     case KeyRelease: {
       int m = ev.xkey.state;
-      int k = XkbKeycodeToKeysym(f->dpy, ev.xkey.keycode, 0, 0);
+      int k = XkbKeycodeToKeysym(b->dpy, ev.xkey.keycode, 0, 0);
       for (unsigned int i = 0; i < 124; i += 2) {
         if (FENSTER_KEYCODES[i] == k) {
           f->keys[FENSTER_KEYCODES[i + 1]] = (ev.type == KeyPress);
@@ -369,7 +381,7 @@ FENSTER_API void fenster_sleep(int64_t ms) {
 }
 FENSTER_API int64_t fenster_time(void) {
   struct timespec time;
-  clock_gettime(CLOCK_REALTIME, &time);
+  clock_gettime(0/*CLOCK_REALTIME*/, &time);
   return time.tv_sec * 1000 + (time.tv_nsec / 1000000);
 }
 #endif
