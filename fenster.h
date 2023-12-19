@@ -259,6 +259,7 @@ FENSTER_API void fenster_screen_size(int *width, int *height) {
 }
 
 FENSTER_API int fenster_open(struct fenster *f) {
+  backend_t* b = malloc(sizeof(backend_t));
   HINSTANCE hInstance = GetModuleHandle(NULL);
   WNDCLASSEX wc = {0};
   wc.cbSize = sizeof(WNDCLASSEX);
@@ -267,21 +268,25 @@ FENSTER_API int fenster_open(struct fenster *f) {
   wc.hInstance = hInstance;
   wc.lpszClassName = f->title;
   RegisterClassEx(&wc);
-  f->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, f->title, f->title,
+  b->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, f->title, f->title,
                            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                            f->width, f->height, NULL, NULL, hInstance, NULL);
 
-  if (f->hwnd == NULL)
+  if (b->hwnd == NULL)
     return -1;
-  SetWindowLongPtr(f->hwnd, GWLP_USERDATA, (LONG_PTR)f);
-  ShowWindow(f->hwnd, SW_NORMAL);
-  UpdateWindow(f->hwnd);
+  SetWindowLongPtr(b->hwnd, GWLP_USERDATA, (LONG_PTR)f);
+  ShowWindow(b->hwnd, SW_NORMAL);
+  UpdateWindow(b->hwnd);
+  f->backend = b;
   return 0;
 }
 
-FENSTER_API void fenster_close(struct fenster *f) { (void)f; }
+FENSTER_API void fenster_close(struct fenster *f) { 
+  free(f->backend);
+}
 
 FENSTER_API int fenster_loop(struct fenster *f) {
+  backend_t* b = (backend_t*)f->backend;
   MSG msg;
   while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
     if (msg.message == WM_QUIT)
@@ -289,7 +294,7 @@ FENSTER_API int fenster_loop(struct fenster *f) {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
-  InvalidateRect(f->hwnd, NULL, TRUE);
+  InvalidateRect(b->hwnd, NULL, TRUE);
   return 0;
 }
 #else
