@@ -303,10 +303,22 @@ static int FENSTER_KEYCODES[124] = {XK_BackSpace,8,XK_Delete,127,XK_Down,18,XK_E
 // clang-format on
 FENSTER_API void fenster_screen_size(int *width, int *height){
   Display *display = XOpenDisplay(NULL);
+  
+  if (XineramaIsActive(display)) {
+    int screen_count;
+    XineramaScreenInfo *screens = XineramaQueryScreens(display, &screen_count);
+    if(screens){
+      *width = screens[0].width;
+      *height = screens[0].height;
+      XFree(screens);
+    }
 
-  Screen *screen = XScreenOfDisplay(display,0);
-  *width = WidthOfScreen(screen);
-  *height = HeightOfScreen(screen);
+  }
+  else {
+    Screen *screen = XScreenOfDisplay(display,0);
+    *width = WidthOfScreen(screen);
+    *height = HeightOfScreen(screen);
+  }
 
   XCloseDisplay(display);
 }
