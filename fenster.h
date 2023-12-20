@@ -48,6 +48,7 @@ FENSTER_API int64_t FENSTER_DLL(fenster_time,void);
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <time.h>
+#include <X11/extensions/Xinerama.h>
 #endif
 typedef struct{
   #if defined(__APPLE__)
