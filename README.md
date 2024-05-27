@@ -17,6 +17,7 @@ This library provides the most minimal and highly opinionated way to display a c
 * One C99 header of ~300LOC, easy to understand and extend.
 * Go bindings (`import "github.com/zserge/fenster"`, see [godoc](https://pkg.go.dev/github.com/zserge/fenster))
 * Zig bindings (see [examples/minimal-zig](/examples/minimal-zig))
+* Lua bindings (see https://github.com/jonasgeiler/lua-fenster)
 * And, yes, [it can run Doom](/examples/doom-c)!
 
 ## Example
