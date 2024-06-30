@@ -48,6 +48,7 @@ Compile it and run:
 
 ```
 # Linux
+# libasound2-dev package required in Debian/Ubuntu.
 cc main.c -lX11 -lasound -o main && ./main
 # macOS
 cc main.c -framework Cocoa -framework AudioToolbox -o main && ./main
