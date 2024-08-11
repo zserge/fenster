@@ -350,8 +350,11 @@ public:
   }
   bool loop(const int fps) {
     int64_t t = fenster_time();
-    if (t - this->now < 1000 / fps) {
-      fenster_sleep(t - now);
+    int64_t paint_time = t - this->now;
+    int64_t frame_budget = 1000 / fps;
+    int64_t sleep_time = frame_budget - paint_time;
+    if (sleep_time > 0) {
+      fenster_sleep(sleep_time);
     }
     this->now = t;
     return fenster_loop(&this->f) == 0;
