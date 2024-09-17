@@ -63,6 +63,11 @@ static int run() {
       }
     }
     *p = '\0';
+
+    int left_down = (f.mouse >> MOUSE_LEFT_BUTTON) & 1;
+    int middle_down = (f.mouse >> MOUSE_MIDDLE_BUTTON) & 1;
+    int right_down = (f.mouse >> MOUSE_RIGHT_BUTTON) & 1;
+    
     fenster_rect(&f, 0, 0, W, H, 0);
     /* draw mouse "pointer" */
     if (f.x > 5 && f.y > 5 && f.x < f.width - 5 && f.y < f.height - 5) {

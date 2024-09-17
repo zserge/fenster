@@ -49,7 +49,7 @@ Compile it and run:
 
 ```
 # Linux
-cc main.c -lX11 -lasound -o main && ./main
+cc main.c -lX11 -lXinerama -lasound -o main && ./main
 # macOS
 cc main.c -framework Cocoa -framework AudioToolbox -o main && ./main
 # windows
