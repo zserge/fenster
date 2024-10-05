@@ -72,7 +72,7 @@ struct fenster {
   int mod;       /* mod is 4 bits mask, ctrl=1, shift=2, alt=4, meta=8 */
   int x;         /* mouse X coordinate */
   int y;         /* mouse Y coordinate */
-  int mouse;     /* 0 = no buttons pressed, 1 = left button pressed */
+  int mouse;     /* bit flags: 1: left, 2: right, 4: middle */
 };
 ```
 
