@@ -27,7 +27,7 @@ struct fenster {
   int mod;       /* mod is 4 bits mask, ctrl=1, shift=2, alt=4, meta=8 */
   int x;
   int y;
-  int mouse;
+  int mouse;     /* Bit flags: 1: left, 2: right, 4: middle */
 #if defined(__APPLE__)
   id wnd;
 #elif defined(_WIN32)
@@ -139,11 +139,23 @@ FENSTER_API int fenster_loop(struct fenster *f) {
     return 0;
   NSUInteger evtype = msg(NSUInteger, ev, "type");
   switch (evtype) {
-  case 1: /* NSEventTypeMouseDown */
+  case 1: /* NSEventTypeLeftMouseDown */
     f->mouse |= 1;
     break;
-  case 2: /* NSEventTypeMouseUp*/
+  case 2: /* NSEventTypeLeftMouseUp */
     f->mouse &= ~1;
+    break;
+  case 3: /* NSEventTypeRightMouseDown */
+    f->mouse |= 2;
+    break;
+  case 4: /* NSEventTypeRightMouseUp */
+    f->mouse &= ~2;
+    break;
+  case 25: /* NSEventTypeOtherMouseDown */
+    f->mouse |= 4;
+    break;
+  case 26: /* NSEventTypeOtherMouseUp */
+    f->mouse &= ~4;
     break;
   case 5:
   case 6: { /* NSEventTypeMouseMoved */
@@ -198,8 +210,22 @@ static LRESULT CALLBACK fenster_wndproc(HWND hwnd, UINT msg, WPARAM wParam,
     DestroyWindow(hwnd);
     break;
   case WM_LBUTTONDOWN:
+    f->mouse |= 1;
+    break;
   case WM_LBUTTONUP:
-    f->mouse = (msg == WM_LBUTTONDOWN);
+    f->mouse &= ~1;
+    break;
+  case WM_RBUTTONDOWN:
+    f->mouse |= 2;
+    break;
+  case WM_RBUTTONUP:
+    f->mouse &= ~2;
+    break;
+  case WM_MBUTTONDOWN:
+    f->mouse |= 4;
+    break;
+  case WM_MBUTTONUP:
+    f->mouse &= ~4;
     break;
   case WM_MOUSEMOVE:
     f->y = HIWORD(lParam), f->x = LOWORD(lParam);
@@ -285,8 +311,30 @@ FENSTER_API int fenster_loop(struct fenster *f) {
     XNextEvent(f->dpy, &ev);
     switch (ev.type) {
     case ButtonPress:
+      switch (ev.xbutton.button) {
+        case Button1:
+          f->mouse |= 1;
+          break;
+        case Button3:
+          f->mouse |= 2;
+          break;
+        case Button2:
+          f->mouse |= 4;
+          break;
+      }
+      break;
     case ButtonRelease:
-      f->mouse = (ev.type == ButtonPress);
+      switch (ev.xbutton.button) {
+        case Button1:
+          f->mouse &= ~1;
+          break;
+        case Button3:
+          f->mouse &= ~2;
+          break;
+        case Button2:
+          f->mouse &= ~4;
+          break;
+      }
       break;
     case MotionNotify:
       f->x = ev.xmotion.x, f->y = ev.xmotion.y;
