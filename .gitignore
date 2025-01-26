@@ -8,3 +8,5 @@ a.out
 zig-cache
 zig-out
 Makefile.local
+cmake-build*
+.idea
