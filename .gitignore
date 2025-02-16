@@ -1,4 +1,8 @@
 main
+main.exe
+main.wasm
+main.js
+main.html
 a.out
 *.o
 *.elf

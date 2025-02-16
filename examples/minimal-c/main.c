@@ -1,4 +1,8 @@
+#ifdef EMSCRIPTEN
+#include "fenster-emscripten.h"
+#else
 #include "fenster.h"
+#endif
 
 #define W 320
 #define H 240
