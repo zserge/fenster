@@ -124,6 +124,9 @@ FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
   }
 }
 FENSTER_API void fenster_audio_close(struct fenster_audio *fa) {
+  for (int i = 0; i < 2; i++)
+    while (!(fa->hdr[i].dwFlags & WHDR_DONE))
+      Sleep(10);
   waveOutClose(fa->wo);
 }
 #elif defined(__linux__)
@@ -132,6 +135,7 @@ int snd_pcm_set_params(void *, int, int, int, int, int, int);
 int snd_pcm_avail(void *);
 int snd_pcm_writei(void *, const void *, unsigned long);
 int snd_pcm_recover(void *, int, int);
+int snd_pcm_drain(void *);
 int snd_pcm_close(void *);
 FENSTER_API int fenster_audio_open(struct fenster_audio *fa) {
   if (snd_pcm_open(&fa->pcm, "default", 0, 0))
@@ -152,6 +156,7 @@ FENSTER_API void fenster_audio_write(struct fenster_audio *fa, float *buf,
     snd_pcm_recover(fa->pcm, r, 0);
 }
 FENSTER_API void fenster_audio_close(struct fenster_audio *fa) {
+  snd_pcm_drain(fa->pcm);
   snd_pcm_close(fa->pcm);
 }
 #endif
