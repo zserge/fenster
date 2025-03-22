@@ -327,7 +327,7 @@ FENSTER_API void fenster_sleep(int64_t ms) {
 }
 FENSTER_API int64_t fenster_time(void) {
   struct timespec time;
-  clock_gettime(CLOCK_REALTIME, &time);
+  clock_gettime(CLOCK_MONOTONIC, &time);
   return time.tv_sec * 1000 + (time.tv_nsec / 1000000);
 }
 #endif
