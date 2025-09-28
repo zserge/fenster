@@ -78,7 +78,7 @@ static void fenster_draw_rect(id v, SEL s, CGRect r) {
       NULL, f->buf, f->width * f->height * 4, NULL);
   CGImageRef img =
       CGImageCreate(f->width, f->height, 8, 32, f->width * 4, space,
-                    kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little,
+                    (CGBitmapInfo)kCGImageAlphaNoneSkipFirst | (CGBitmapInfo)kCGBitmapByteOrder32Little,
                     provider, NULL, false, kCGRenderingIntentDefault);
   CGColorSpaceRelease(space);
   CGDataProviderRelease(provider);
