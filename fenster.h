@@ -264,6 +264,42 @@ FENSTER_API int fenster_loop(struct fenster *f) {
   return 0;
 }
 #elif defined(_WIN32)
+
+/* WS: Make sure the client area fits; center the window in the process */
+static void FitWindow(struct fenster *f) {
+    RECT rcClient, rwClient;
+    POINT ptDiff;
+    HWND hwndParent;
+    RECT rcParent, rwParent;
+    POINT ptPos;
+
+    GetClientRect(f->hwnd, &rcClient);
+    GetWindowRect(f->hwnd, &rwClient);
+    ptDiff.x = (rwClient.right - rwClient.left) - rcClient.right;
+    ptDiff.y = (rwClient.bottom - rwClient.top) - rcClient.bottom;
+
+    hwndParent = GetParent(f->hwnd);
+    if (NULL == hwndParent)
+        hwndParent = GetDesktopWindow();
+
+    GetWindowRect(hwndParent, &rwParent);
+    GetClientRect(hwndParent, &rcParent);
+
+    ptPos.x = rwParent.left + (rcParent.right - f->width) / 2;
+    ptPos.y = rwParent.top + (rcParent.bottom - f->height) / 2;
+
+    MoveWindow(f->hwnd, ptPos.x, ptPos.y, f->width + ptDiff.x, f->height + ptDiff.y, 0);
+}
+
+/* WS: TIL about `__argc` and `__argv`, which are global variables in Windows' C library */
+#if !defined(NO_WINMAIN)
+extern int main(int argc, char **argv);
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow) {
+	(void)hInstance, (void)hPrevInstance, (void)pCmdLine, (void)nCmdShow;
+	return main(__argc, __argv);
+}
+#endif
+
 // clang-format off
 static const uint8_t FENSTER_KEYCODES[] = {0,27,49,50,51,52,53,54,55,56,57,48,45,61,8,9,81,87,69,82,84,89,85,73,79,80,91,93,10,0,65,83,68,70,71,72,74,75,76,59,39,96,0,92,90,88,67,86,66,78,77,44,46,47,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,17,3,0,20,0,19,0,5,18,4,26,127};
 // clang-format on
@@ -328,13 +364,19 @@ FENSTER_API int fenster_open(struct fenster *f) {
   wc.lpfnWndProc = fenster_wndproc;
   wc.hInstance = hInstance;
   wc.lpszClassName = f->title;
+  wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+  wc.hCursor = LoadCursor(NULL, IDC_ARROW);
   RegisterClassEx(&wc);
   f->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, f->title, f->title,
-                           WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                           WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+						   CW_USEDEFAULT, CW_USEDEFAULT,
                            f->width, f->height, NULL, NULL, hInstance, NULL);
 
   if (f->hwnd == NULL)
     return -1;
+
+  FitWindow(f);
+
   SetWindowLongPtr(f->hwnd, GWLP_USERDATA, (LONG_PTR)f);
   ShowWindow(f->hwnd, SW_NORMAL);
   UpdateWindow(f->hwnd);
