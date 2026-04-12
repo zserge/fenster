@@ -19,6 +19,7 @@
 #define _DEFAULT_SOURCE 1
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <time.h>
 #endif
@@ -47,6 +48,7 @@ struct fenster {
   Window w;
   GC gc;
   XImage *img;
+  Atom wmDeleteMessage;
 #endif
 };
 
@@ -356,12 +358,34 @@ FENSTER_API int fenster_loop(struct fenster *f) {
 // clang-format off
 static int FENSTER_KEYCODES[124] = {XK_BackSpace,8,XK_Delete,127,XK_Down,18,XK_End,5,XK_Escape,27,XK_Home,2,XK_Insert,26,XK_Left,20,XK_Page_Down,4,XK_Page_Up,3,XK_Return,10,XK_Right,19,XK_Tab,9,XK_Up,17,XK_apostrophe,39,XK_backslash,92,XK_bracketleft,91,XK_bracketright,93,XK_comma,44,XK_equal,61,XK_grave,96,XK_minus,45,XK_period,46,XK_semicolon,59,XK_slash,47,XK_space,32,XK_a,65,XK_b,66,XK_c,67,XK_d,68,XK_e,69,XK_f,70,XK_g,71,XK_h,72,XK_i,73,XK_j,74,XK_k,75,XK_l,76,XK_m,77,XK_n,78,XK_o,79,XK_p,80,XK_q,81,XK_r,82,XK_s,83,XK_t,84,XK_u,85,XK_v,86,XK_w,87,XK_x,88,XK_y,89,XK_z,90,XK_0,48,XK_1,49,XK_2,50,XK_3,51,XK_4,52,XK_5,53,XK_6,54,XK_7,55,XK_8,56,XK_9,57};
 // clang-format on
+
 FENSTER_API int fenster_open(struct fenster *f) {
   f->dpy = XOpenDisplay(NULL);
   int screen = DefaultScreen(f->dpy);
-  f->w = XCreateSimpleWindow(f->dpy, RootWindow(f->dpy, screen), 0, 0, f->width,
+  
+  int screen_width = DisplayWidth(f->dpy, screen);
+  int screen_height = DisplayHeight(f->dpy, screen);
+  int x = (screen_width - f->width) / 2;
+  int y = (screen_height - f->height) / 2;
+
+  f->w = XCreateSimpleWindow(f->dpy, RootWindow(f->dpy, screen), x, y, f->width,
                              f->height, 0, BlackPixel(f->dpy, screen),
                              WhitePixel(f->dpy, screen));
+
+  XSizeHints hints = {
+    .flags = PPosition | PSize | PMinSize | PMaxSize,
+    .x = x,
+    .y = y,
+    .width = f->width,
+    .height = f->height,
+    .min_width = f->width,
+    .max_width = f->width,
+    .min_height = f->height,
+    .max_height = f->height,
+  };
+
+  XSetWMNormalHints(f->dpy, f->w, &hints);
+
   f->gc = XCreateGC(f->dpy, f->w, 0, 0);
   XSelectInput(f->dpy, f->w,
                ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask |
@@ -371,6 +395,10 @@ FENSTER_API int fenster_open(struct fenster *f) {
   XSync(f->dpy, f->w);
   f->img = XCreateImage(f->dpy, DefaultVisual(f->dpy, 0), 24, ZPixmap, 0,
                         (char *)f->buf, f->width, f->height, 32, 0);
+
+  f->wmDeleteMessage = XInternAtom(f->dpy, "WM_DELETE_WINDOW", False);
+  XSetWMProtocols(f->dpy, f->w, &f->wmDeleteMessage, 1);
+
   return 0;
 }
 FENSTER_API void fenster_close(struct fenster *f) { XCloseDisplay(f->dpy); }
@@ -381,26 +409,43 @@ FENSTER_API int fenster_loop(struct fenster *f) {
   while (XPending(f->dpy)) {
     XNextEvent(f->dpy, &ev);
     switch (ev.type) {
-    case ButtonPress:
-    case ButtonRelease:
-      f->mouse = (ev.type == ButtonPress);
-      break;
-    case MotionNotify:
-      f->x = ev.xmotion.x, f->y = ev.xmotion.y;
-      break;
-    case KeyPress:
-    case KeyRelease: {
-      int m = ev.xkey.state;
-      int k = XkbKeycodeToKeysym(f->dpy, ev.xkey.keycode, 0, 0);
-      for (unsigned int i = 0; i < 124; i += 2) {
-        if (FENSTER_KEYCODES[i] == k) {
-          f->keys[FENSTER_KEYCODES[i + 1]] = (ev.type == KeyPress);
-          break;
+      case ButtonPress:
+      case ButtonRelease:
+        f->mouse = (ev.type == ButtonPress);
+        break;
+      case MotionNotify:
+        f->x = ev.xmotion.x, f->y = ev.xmotion.y;
+        break;
+      case KeyPress:
+      case KeyRelease: {
+        int mask = 0;
+        int k = XkbKeycodeToKeysym(f->dpy, ev.xkey.keycode, 0, 0);
+        switch(k) {
+          case XK_Control_L:
+          case XK_Control_R: mask = 0x1; break;
+          case XK_Shift_L:
+          case XK_Shift_R: mask = 0x2; break;
+          case XK_Alt_L:
+          case XK_Alt_R: mask = 0x4; break;
+          case XK_Super_L:
+          case XK_Super_R: mask = 0x8; break;
         }
-      }
-      f->mod = (!!(m & ControlMask)) | (!!(m & ShiftMask) << 1) |
-               (!!(m & Mod1Mask) << 2) | (!!(m & Mod4Mask) << 3);
-    } break;
+        if(mask) {
+          f->mod = (ev.type == KeyPress) ? f->mod | mask : f->mod & ~mask;
+        } else {
+          for (unsigned int i = 0; i < 124; i += 2) {
+            if (FENSTER_KEYCODES[i] == k) {
+              f->keys[FENSTER_KEYCODES[i + 1]] = (ev.type == KeyPress);
+              break;
+            }
+          }
+        }
+      } break;
+      case ClientMessage: { 
+        if(ev.xclient.data.l[0] == (long int)f->wmDeleteMessage) {
+          return -1;
+        }
+      } break;
     }
   }
   return 0;
