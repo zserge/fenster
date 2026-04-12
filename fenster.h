@@ -52,6 +52,26 @@ struct fenster {
 #endif
 };
 
+#define KEY_BACKSPACE   8
+#define KEY_DELETE    127
+#define KEY_ESCAPE     27
+#define KEY_PAGEDOWN    4
+#define KEY_PAGEUP      3
+#define KEY_HOME        2
+#define KEY_END         5
+#define KEY_INSERT     26
+#define KEY_RETURN     10
+#define KEY_TAB         9
+#define KEY_UP         17
+#define KEY_DOWN       18
+#define KEY_LEFT       20
+#define KEY_RIGHT      19
+
+#define MASK_CTRL  0x1
+#define MASK_SHIFT 0x2
+#define MASK_ALT   0x4
+#define MASK_SUPER 0x8
+
 #ifndef FENSTER_API
 #define FENSTER_API extern
 #endif
