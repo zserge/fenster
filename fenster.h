@@ -37,6 +37,7 @@ struct fenster {
   Window w;
   GC gc;
   XImage *img;
+  Atom wm_delete;
 #endif
 };
 
@@ -271,6 +272,8 @@ FENSTER_API int fenster_open(struct fenster *f) {
                    ButtonReleaseMask | PointerMotionMask);
   XStoreName(f->dpy, f->w, f->title);
   XMapWindow(f->dpy, f->w);
+  f->wm_delete = XInternAtom(f->dpy, "WM_DELETE_WINDOW", False);
+  XSetWMProtocols(f->dpy, f->w, &f->wm_delete, 1);
   XSync(f->dpy, f->w);
   f->img = XCreateImage(f->dpy, DefaultVisual(f->dpy, 0), 24, ZPixmap, 0,
                         (char *)f->buf, f->width, f->height, 32, 0);
@@ -284,6 +287,9 @@ FENSTER_API int fenster_loop(struct fenster *f) {
   while (XPending(f->dpy)) {
     XNextEvent(f->dpy, &ev);
     switch (ev.type) {
+    case ClientMessage:
+      if ((Atom)ev.xclient.data.l[0] == f->wm_delete) return -1;
+      break;
     case ButtonPress:
     case ButtonRelease:
       f->mouse = (ev.type == ButtonPress);
